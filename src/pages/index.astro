@@ -1,0 +1,64 @@
+---
+import NowPlaying from "../components/NowPlaying.astro";
+import Search from "../components/Search.astro";
+import Layout from "../layouts/Layout.astro";
+import { spotifyApi } from "../util";
+const scopes = [
+	"app-remote-control",
+	"user-read-private",
+	"user-read-email",
+	"streaming",
+	"user-read-currently-playing",
+	"user-modify-playback-state",
+	"user-read-playback-state",
+];
+
+if ((!spotifyApi || !spotifyApi.getAccessToken()) || Astro.url.searchParams.get("reload") == "true")
+	return Astro.redirect(spotifyApi.createAuthorizeURL(scopes, Math.random()));
+
+let name:string;
+let error:boolean;
+await spotifyApi.getMe().then((data) => {
+	name = data.body.display_name;
+}).catch(async (err) => {
+	await spotifyApi.refreshAccessToken()
+	error = true;
+	console.log(err);
+})
+
+if (error) {
+	return Astro.redirect("/?reload=true")
+}
+---
+
+<Layout title="Welcome to Astro.">
+	<header>
+		<h1>Barborky přehrávač</h1>
+		{name?"Přihlášený uživatel: "+ name : ""}
+		(
+		<a href="?reload=true">Login</a>
+		)
+	</header>
+
+	<main>
+		<NowPlaying spotifyApi={spotifyApi} /> <br>
+		
+		<h2>Vyhledejte skladbu</h2>
+		<input type="search" name="search" id="search" placeholder="Zadejte název">
+		<Search spotifyApi={spotifyApi} query={Astro.url.searchParams.get("q")}/>
+	</main>
+</Layout>
+
+<style>
+	header {
+		text-align: center;
+	}
+</style>
+
+<script is:inline>
+	document.querySelector("#search").addEventListener("keyup", function(event) {
+    if (event.key === "Enter") {
+        document.location.href = "?q=" + encodeURI(document.querySelector("#search").value);
+    }
+	});
+</script>

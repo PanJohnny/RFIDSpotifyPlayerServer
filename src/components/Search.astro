@@ -1,0 +1,92 @@
+---
+import SpotifyWebApi from "spotify-web-api-node";
+import Write from "./Write.astro";
+
+interface Props {
+    spotifyApi: SpotifyWebApi;
+    query: string;
+}
+
+const { spotifyApi, query } = Astro.props as Props;
+
+let response: SpotifyApi.SearchResponse;
+await spotifyApi.search(query, ["track"]).then(
+    (data) => {
+        response = data.body;
+    },
+    (err) => {}
+);
+---
+
+<div class="container">
+    {
+        !response ? (
+            <code>Nic tady není {" (╯°□°）╯︵ ┻━┻ "}</code>
+        ) : (
+            <table>
+                <thead>
+                    <th>jméno</th>
+                    <th>autor</th>
+                    <th>album</th>
+                    <th />
+                </thead>
+                {
+                    response.tracks.items.map((track) => (
+                        <tr>
+                    <td>{track.name}</td>
+                    <td>
+                        {
+                            track.artists.map((artist) => (
+                                <span class="artist">{artist.name}</span>
+                            ))
+                        }
+                        </td>
+                    <td>{track.album.name}</td>
+                    <td>
+                        <Write
+                            spotifyApi={spotifyApi}
+                            uri={track.uri}
+                            name={track.name}
+                            contextMode={false}
+                        />
+                        <Write
+                            spotifyApi={spotifyApi}
+                            uri={track.album.uri}
+                            name={track.album.name}
+                            contextMode={true}
+                        />
+                    </td>
+                </tr>
+                    ))
+                }
+            </table>
+        )
+    }
+</div>
+
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    td,
+    th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #dddddd;
+    }
+
+    .artist:not(:last-child)::after {
+        content: ", ";
+    }
+
+    .container {
+        margin: 2em;
+        margin-left: 0em;
+    }
+</style>
