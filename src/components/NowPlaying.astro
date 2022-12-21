@@ -32,9 +32,11 @@ if (uri) {
         }
     );
 
-    img = track.album.images[2];
+    if (track)
+        img = track.album.images[2];
 
-    playbum = context.type == "playlist" || context.type == "album";
+    if (context)
+        playbum = context.type == "playlist" || context.type == "album";
 }
 ---
 

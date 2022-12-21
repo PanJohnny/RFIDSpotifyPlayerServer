@@ -1,0 +1,56 @@
+---
+import * as fs from 'fs';
+import { spotifyApi } from '../util';
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import Layout from '../layouts/Layout.astro';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const path = __dirname+"\\..\\..\\..\\cards.json";
+
+const file = fs.readFileSync(path).toString("utf-8")
+
+const jsonFile = JSON.parse(file)
+---
+
+<Layout title="Souhr karet">
+    <header>
+        <h1>
+            Souhr z karet
+        </h1>
+        <a href="/">Domů</a>
+    </header>
+    <main>
+        <p>Číslo karty: [P/T/Q] id</p>
+        <p>
+            <li>P - play</li>
+            <li>T - toggle playback</li>
+            <li>Q - přidat do fronty</li>
+        </p>
+        {
+            Object.keys(jsonFile).map((key) => {
+                const value = jsonFile[key];
+
+                return (
+                    <div class="card-info">
+                        {key}: {value}
+                        <a href={"/write?uri=" + value}>Napsat</a>
+                    </div>
+                )
+            })
+        }
+    </main>
+</Layout>
+
+<style>
+	header {
+		text-align: center;
+	}
+
+    .card-info {
+        display: flex;
+    }
+</style>

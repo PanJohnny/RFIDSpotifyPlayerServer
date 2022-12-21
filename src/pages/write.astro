@@ -1,16 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { spotifyApi } from "../util";
-import * as fs from 'fs';
-
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const file = fs.readFileSync( __dirname+"..\\..\\..\\cards.json")
-
+import { spotifyApi, writeData } from "../util";
 
 const uri = Astro.url.searchParams.get("uri");
 if (!uri)
@@ -20,37 +10,36 @@ if (!uri)
 let track: SpotifyApi.SingleTrackResponse;
 let album: SpotifyApi.SingleAlbumResponse;
 let playlist: SpotifyApi.SinglePlaylistResponse;
-let playBumData: SpotifyApi.SingleAlbumResponse|SpotifyApi.SinglePlaylistResponse;
-let succcess:boolean;
+let playBumData:
+    | SpotifyApi.SingleAlbumResponse
+    | SpotifyApi.SinglePlaylistResponse;
+let succcess: boolean;
 
 if (uri.includes("track")) {
     await spotifyApi.getTrack(uri.split(":")[2]).then(
         (data) => {
             track = data.body;
-            succcess=true;
+            succcess = true;
         },
-        (err) => {
-        }
+        (err) => {}
     );
 } else if (uri.includes("album")) {
     await spotifyApi.getAlbum(uri.split(":")[2]).then(
         (data) => {
             album = data.body;
             playBumData = album;
-            succcess=true;
+            succcess = true;
         },
-        (err) => {
-        }
+        (err) => {}
     );
 } else if (uri.includes("playlist")) {
     await spotifyApi.getPlaylist(uri.split(":")[2]).then(
         (data) => {
             playlist = data.body;
             playBumData = playlist;
-            succcess=true;
+            succcess = true;
         },
-        (err) => {
-        }
+        (err) => {}
     );
 }
 
@@ -59,11 +48,16 @@ if (!succcess) {
         "/?reload=true&redirect_reason=" + encodeURI("access token prošel")
     );
 }
+
+writeData({
+    writing: true
+})
 ---
 
 <Layout title="Psaní na kartu">
     <header>
         <code id="uri">{uri}</code>
+        <a href="/">Domů</a>
     </header>
     <main>
         <div>
@@ -72,44 +66,68 @@ if (!succcess) {
                 <option value="null">--- Vyberte ---</option>
                 <option value="P">Přehrát</option>
                 {
-                    !playBumData?(<option value="Q"
-                    >Přidat do fronty</option>):""
+                    !playBumData ? (
+                        <option value="Q">Přidat do fronty</option>
+                    ) : (
+                        ""
+                    )
                 }
                 <option value="T">
                     Hrát/Zastavit (ignoruje výběr čehokoliv)
                 </option>
             </select>
-            <input type="button" id="submitTrack" onclick="submitTrack()" value="Potvrdit"/>
+            <input
+                type="button"
+                id="submitTrack"
+                onclick="submitTrack()"
+                value="Potvrdit"
+            />
         </div>
         <div>
             <h2>2) Zkontrolujte informace</h2>
             <div class="track">
-                {track?(<img
-                    width={track.album.images[2].width}
-                    height={track.album.images[2].height}
-                    src={track.album.images[2].url}
-                />):!playlist?(<img
-                    width={album.images[2].width}
-                    height={album.images[2].height}
-                    src={album.images[2].url}
-                />):""}
+                {
+                    track ? (
+                        <img
+                            width={track.album.images[2].width}
+                            height={track.album.images[2].height}
+                            src={track.album.images[2].url}
+                        />
+                    ) : !playlist ? (
+                        <img
+                            width={album.images[2].width}
+                            height={album.images[2].height}
+                            src={album.images[2].url}
+                        />
+                    ) : (
+                        ""
+                    )
+                }
                 <div>
-                    <h3>{track?track.name:playBumData.name}</h3>
+                    <h3>{track ? track.name : playBumData.name}</h3>
                     <div>
                         {
-                            track?track.artists.map((artist) => (
-                                <span class="artist">{artist.name}</span>
-                            )) : album?album.artists.map((artist) => (
-                                <span class="artist">{artist.name}</span>
-                            )): playlist.owner.display_name
+                            track
+                                ? track.artists.map((artist) => (
+                                      <span class="artist">{artist.name}</span>
+                                  ))
+                                : album
+                                ? album.artists.map((artist) => (
+                                      <span class="artist">{artist.name}</span>
+                                  ))
+                                : playlist.owner.display_name
                         }
                     </div>
                     {
-                        track?(<div>
-                        <a href={"?uri=" + track.album.uri}>
-                            {track.album.name}
-                        </a>
-                    </div>):""
+                        track ? (
+                            <div>
+                                <a href={"?uri=" + track.album.uri}>
+                                    {track.album.name}
+                                </a>
+                            </div>
+                        ) : (
+                            ""
+                        )
                     }
                 </div>
             </div>
@@ -123,6 +141,8 @@ if (!succcess) {
             <p>
                 Debug informace: <code id="info"></code>
             </p>
+            <hr>
+            <p id="message"></p>
         </div>
     </main>
 </Layout>
@@ -130,12 +150,52 @@ if (!succcess) {
 <script is:inline>
     const card = document.querySelector("#card");
     const info = document.querySelector("#info");
-    const writetype =  document.querySelector("#writetype");
+    const writetype = document.querySelector("#writetype");
     const uriTrack = document.querySelector("#uri").innerText;
+
+    let lastCard = "";
 
     function submitTrack() {
         const value = writetype.options[writetype.selectedIndex].value;
-        info.innerText = value + (value=="T"?"":" " + uriTrack);
+        if (value != "null") {
+            const str =  value + (value == "T" ? "" : " " + uriTrack);
+            info.innerText = str;
+
+            fetch("/api/write?data=" + str).then((success) => {}, (err) => {
+                window.alert(err)
+            });
+        }
+    }
+
+    const interval = setInterval(() => {
+        fetch("/api/last")
+            .then((data) => data.json())
+            .then((json) => {
+                if (json.card != lastCard && lastCard != "") {
+                    const value = writetype.options[writetype.selectedIndex].value;
+                    const str =  value + (value == "T" ? "" : " " + uriTrack);
+                    if (json.data != str) {
+                        document.querySelector("#message").innerText = "⚠ Prosím vyberte nejdříve možnost"
+                        return;
+                    }
+                    card.innerText = json.card;
+                    document.querySelector("#message").innerText = "Napsáno! Můžete zavřít tuto stránku"
+                    fetch("/api/done").then((success) => {
+                        console.log("done!");
+                    }, (err) => {
+                        window.alert(err)
+                    });
+                    clearInterval(interval)
+                } else if (lastCard == "") {
+                    lastCard = json.card;
+                }
+
+                console.log(json);
+            });
+    }, 1000);
+
+    window.onbeforeunload = () => {
+        fetch("/api/done")
     }
 </script>
 

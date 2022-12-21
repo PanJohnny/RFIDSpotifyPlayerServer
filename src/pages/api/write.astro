@@ -1,0 +1,15 @@
+---
+import { writeData } from "../../util";
+
+const data = Astro.url.searchParams.get("data")
+
+if (!data) {
+    return new Response("", {
+        status: 400
+    })
+}
+
+writeData({
+    data: data
+})
+---
