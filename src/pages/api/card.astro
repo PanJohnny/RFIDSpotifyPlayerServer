@@ -32,6 +32,19 @@ if (data.writing) {
     });
 } else {
     if (jsonFile[id]) {
+        // fetch index in order to validate token :)
+        let success = true;
+        await spotifyApi.getMe().catch(async (err) => {
+	        await spotifyApi.refreshAccessToken()
+            success = false;
+	        console.log(err);
+        })
+
+        if (!success)
+            return new Response("", {
+                status: 401
+            })
+
         const str:string = jsonFile[id];
         if (str.startsWith("T")) {
             await spotifyApi.getMyCurrentPlaybackState().then(async (data) => {
