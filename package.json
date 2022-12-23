@@ -1,5 +1,5 @@
 {
-  "name": "@example/basics",
+  "name": "rfid_reader",
   "type": "module",
   "version": "0.0.1",
   "private": true,
@@ -14,11 +14,9 @@
     "@astrojs/node": "^4.0.0",
     "@types/node": "^18.11.17",
     "astro": "^1.7.2",
-    "fs": "^0.0.1-security",
     "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
-    "@types/spotify-web-api-node": "^5.0.7",
-    "rollup-plugin-node-builtins": "^2.1.2"
+    "@types/spotify-web-api-node": "^5.0.7"
   }
 }

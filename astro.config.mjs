@@ -10,11 +10,5 @@ import node from "@astrojs/node";
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
-  vite: {
-    resolve: {
-      alias: {
-        fs: require.resolve('rollup-plugin-node-builtins'),
-      }
-    }
-  }
+  port: 80
 });
