@@ -12,7 +12,7 @@ const path = __dirname + "\\..\\..\\temp_data.json";
 export const spotifyApi: SpotifyWebApi = new SpotifyWebApi({
 	clientId: "b68e2f3f6ea1445585f99b6a41be6db2",
 	clientSecret: "12e2f1fb2edd44f28600513e315a75c6",
-	redirectUri: "http://10.0.0.17:3000/callback"
+	redirectUri: "http://10.0.0.33/callback"
 })
 
 export interface TempData {
