@@ -11396,7 +11396,7 @@ const _manifest = Object.assign(deserializeManifest({"adapterName":"@astrojs/nod
 	pageMap: pageMap,
 	renderers: renderers
 });
-const _args = {"mode":"standalone","client":"file:///E:/Website/RFID/server/dist/client/","server":"file:///E:/Website/RFID/server/dist/server/","host":false,"port":3000};
+const _args = {"mode":"standalone","client":"file:///E:/Website/RFID/server/dist/client/","server":"file:///E:/Website/RFID/server/dist/server/","host":true,"port":80};
 
 const _exports = createExports(_manifest);
 const handler = _exports['handler'];
