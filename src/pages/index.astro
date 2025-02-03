@@ -1,0 +1,65 @@
+---
+import NowPlaying from "../components/NowPlaying.astro";
+import Search from "../components/Search.astro";
+import Layout from "../layouts/Layout.astro";
+import { spotifyApi } from "../util";
+import CardTable from "../components/CardTable.jsx";
+
+const scopes = [
+	"user-read-private",
+	"user-read-email",
+	"playlist-read-private",
+	"playlist-read-collaborative",
+	"user-library-read",
+	"user-read-playback-state",
+	"user-modify-playback-state",
+	"user-read-currently-playing",
+	"user-read-recently-played",
+	"user-top-read"
+]
+
+if ((!spotifyApi || !spotifyApi.getAccessToken()) || Astro.url.searchParams.get("reload") == "true")
+	return Astro.redirect(spotifyApi.createAuthorizeURL(scopes, Math.random()));
+
+let name:string;
+let error:boolean;
+await spotifyApi.getMe().then((data) => {
+	name = data.body.display_name;
+}).catch(async (err) => {
+	await spotifyApi.refreshAccessToken()
+	error = true;
+	console.log(err);
+})
+
+if (error) {
+	return Astro.redirect("/?reload=true")
+}
+---
+
+<Layout title="Barborky přehrávač">
+	<header>
+		<h1>Barborky přehrávač</h1>
+		{name?"Přihlášený uživatel: "+ name : ""}
+		(
+		<a href="?reload=true">Login</a>
+		)
+		<a href="/all">Karty</a>
+	</header>
+
+	<main>
+		<NowPlaying spotifyApi={spotifyApi} /> <br>
+		<h2>Vyhledejte skladbu</h2>
+		<input type="search" name="search" id="search" placeholder="Zadejte název">
+		<Search spotifyApi={spotifyApi} query={Astro.url.searchParams.get("q")}/>
+		<CardTable client:visible />
+	</main>
+</Layout>
+
+<script>
+	document.querySelector("#search").addEventListener("keyup", function(event) {
+    	// @ts-ignore
+		if (event.key === "Enter") { // @ts-ignore
+        	document.location.href = "?q=" + encodeURI(document.querySelector("#search").value);
+    	}
+	});
+</script>

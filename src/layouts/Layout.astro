@@ -1,0 +1,129 @@
+---
+export interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body>
+		{Astro.url.searchParams.has("redirect_reason")?"Důvod přesměrování: " + Astro.url.searchParams.get("redirect_reason"):""}
+		<slot />
+	</body>
+</html>
+<style is:global>
+	html {
+		font-family: system-ui, sans-serif;
+		min-width: 100vw;
+		min-height: 100vh;
+	}
+
+	code {
+		font-family: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono,
+			Bitstream Vera Sans Mono, Courier New, monospace;
+	}
+
+	 header {
+		 text-align: center;
+	 }
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	th, td {
+		border: 1px solid black;
+		padding: 8px;
+		text-align: left;
+	}
+
+	th {
+		background-color: #FEEFEF;
+	}
+
+	tr:nth-child(even) {
+		background-color: #f2f2f2;
+	}
+
+	tr:hover {
+		background-color: #FEEFEF;
+	}
+
+	button {
+		padding: 5px;
+		background-color: #FEEFEF;
+		border: 1px solid black;
+		cursor: pointer;
+		border-radius: 10px;
+	}
+
+	button:hover {
+		background-color: #FCCFCF;
+	}
+
+	button:active {
+		background-color: #FBB;
+	}
+
+	input[type="text"] {
+		padding: 5px;
+		border: 1px solid black;
+		border-radius: 10px;
+	}
+
+	input[type="text"]:focus {
+		border-color: #FCCFCF;
+	}
+
+	input[type="submit"] {
+		padding: 5px;
+		background-color: #FEEFEF;
+		border: 1px solid black;
+		cursor: pointer;
+		border-radius: 10px;
+	}
+
+	input[type="submit"]:hover {
+		background-color: #FCCFCF;
+	}
+
+	input[type="submit"]:active {
+		background-color: #FBB;
+	}
+
+	label {
+		margin-right: 10px;
+	}
+
+	td button {
+		margin-right: 5px;
+	}
+
+	input[type="checkbox"] {
+		width: 20px;
+		height: 20px;
+	}
+
+	input[type="checkbox"]:checked {
+		background-color: #FCCFCF;
+	}
+
+	form {
+		display: flex;
+		flex-direction: column;
+	}
+
+	form > * {
+		margin-bottom: 10px;
+	}
+</style>

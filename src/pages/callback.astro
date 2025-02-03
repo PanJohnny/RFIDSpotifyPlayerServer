@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { spotifyApi } from '../util';
+
+let worked = false;
+let error = ""
+await spotifyApi.authorizationCodeGrant(Astro.url.searchParams.get("code")).then((data) => {
+    spotifyApi.setAccessToken(data.body['access_token']);
+    spotifyApi.setRefreshToken(data.body['refresh_token']);
+    worked = true;
+}, (err) => {
+    error = err;
+})
+
+if (worked)
+    return Astro.redirect("/")
+---
+
+<Layout title="Error">
+    {error}
+</Layout>

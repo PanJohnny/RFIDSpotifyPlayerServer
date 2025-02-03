@@ -1,0 +1,231 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { spotifyApi } from "../util";
+
+const uri = Astro.url.searchParams.get("uri");
+if (!uri)
+    return Astro.redirect(
+        "/?redirect_reason=" + encodeURI("špatné argumenty pro /write")
+    );
+let track: SpotifyApi.SingleTrackResponse;
+let album: SpotifyApi.SingleAlbumResponse;
+let playlist: SpotifyApi.SinglePlaylistResponse;
+let playBumData:
+    | SpotifyApi.SingleAlbumResponse
+    | SpotifyApi.SinglePlaylistResponse;
+let succcess: boolean;
+
+if (uri.includes("track")) {
+    await spotifyApi.getTrack(uri.split(":")[2]).then(
+        (data) => {
+            track = data.body;
+            succcess = true;
+        },
+        (err) => {}
+    );
+} else if (uri.includes("album")) {
+    await spotifyApi.getAlbum(uri.split(":")[2]).then(
+        (data) => {
+            album = data.body;
+            playBumData = album;
+            succcess = true;
+        },
+        (err) => {}
+    );
+} else if (uri.includes("playlist")) {
+    await spotifyApi.getPlaylist(uri.split(":")[2]).then(
+        (data) => {
+            playlist = data.body;
+            playBumData = playlist;
+            succcess = true;
+        },
+        (err) => {}
+    );
+}
+
+if (!succcess) {
+    return Astro.redirect(
+        "/?reload=true&redirect_reason=" + encodeURI("access token prošel")
+    );
+}
+---
+
+<Layout title="Psaní na kartu">
+    <header>
+        <a href="/">Domů</a>
+    </header>
+    <main>
+        <div>
+            <h2>1) Vyberte možnost</h2>
+            <label for="action">Akce: </label><select name="action" id="action">
+                <option value="none">--- Vyberte ---</option>
+                <option value="play">Přehrát</option>
+                {
+                    !playBumData ? (
+                        <option value="queue">Přidat do fronty</option>
+                    ) : (
+                        ""
+                    )
+                }
+                <option value="state">
+                    Hrát/Zastavit (ignoruje výběr čehokoliv)
+                </option>
+            </select>
+        </div>
+        <div>
+            <h2>2) Zkontrolujte informace</h2>
+            <div class="track">
+                {
+                    track ? (
+                        <img
+                            width={track.album.images[2].width}
+                            height={track.album.images[2].height}
+                            src={track.album.images[2].url}
+                            alt="Album cover"
+                         />
+                    ) : !playlist ? (
+                        <img
+                            width={album.images[2].width}
+                            height={album.images[2].height}
+                            src={album.images[2].url}
+                            alt="Playlist cover"
+                        />
+                    ) : (
+                        ""
+                    )
+                }
+                <div>
+                    <h3>{track ? track.name : playBumData.name}</h3>
+                    <div>
+                        {
+                            track
+                                ? track.artists.map((artist) => (
+                                      <span class="artist">{artist.name}</span>
+                                  ))
+                                : album
+                                ? album.artists.map((artist) => (
+                                      <span class="artist">{artist.name}</span>
+                                  ))
+                                : playlist.owner.display_name
+                        }
+                    </div>
+                    {
+                        track ? (
+                            <div>
+                                <a href={"?uri=" + track.album.uri}>
+                                    {track.album.name}
+                                </a>
+                            </div>
+                        ) : (
+                            ""
+                        )
+                    }
+                </div>
+            </div>
+        </div>
+        <div>
+            <h2>3) Přiložte kartu</h2>
+            <p>Přiložte kartu dokud se nezobrazí správná karta</p>
+            <p>
+                Číslo karty: <code id="card">přiložte kartu</code>
+            </p>
+            <input
+                type="button"
+                id="restoreSession"
+                value="Využít jinou kartu"
+                disabled
+            />
+            <hr>
+            <p id="message"></p>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    .track {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .playing > div {
+        margin-left: 2em;
+    }
+
+    img {
+        border-radius: 2px;
+        display: block;
+    }
+
+    .artist:not(:last-child)::after {
+        content: ", ";
+    }
+
+    h3 {
+        margin: 0px;
+    }
+</style>
+
+<script define:vars={{uri}}>
+    const card = document.querySelector("#card");
+    const info = document.querySelector("#message");
+    const action = document.querySelector("#action");
+    const restoreSessionButton = document.querySelector("#restoreSession");
+
+    let cardId;
+    let checkCard = true;
+    function restoreSession() {
+        fetch("/api/v1/cards/session").then((success) => {
+            info.textContent = "session obnovena";
+            card.textContent = "přiložte kartu";
+            restoreSessionButton.disabled = true;
+            checkCard = true;
+        }, (err) => {
+            window.alert(err)
+            info.textContent = "session obnovení selhalo";
+            restoreSessionButton.disabled = false;
+        });
+    }
+
+    action.addEventListener("change", submitUpdate);
+
+    restoreSession();
+
+    restoreSessionButton.addEventListener("click", restoreSession);
+
+    setInterval(() => {
+        if (!checkCard)
+            return;
+        fetch("/api/v1/cards/last")
+            .then((data) => data.json())
+            .then((json) => {
+                if (!json.data)
+                    return;
+                card.innerText = json.data.id;
+                restoreSessionButton.disabled = false;
+                checkCard = false;
+                cardId = json.data.id;
+                submitUpdate();
+            });
+    }, 1000);
+
+    function submitUpdate() {
+        // Updates the card to the new data
+        if (action.value !== "none" && cardId) {
+            // PUT /api/v1/cards
+            fetch("/api/v1/cards", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: cardId,
+                    action: action.value,
+                    uri: uri,
+                    active: true
+                }),
+            }).then((success) => {
+                info.textContent = "Úspěšně napsáno! Můžete pokračovat, klidně změnit akci apod.";
+            }, (err) => {
+                info.textContent = "Něco se pokazilo!";
+            });
+        }
+    }
+</script>

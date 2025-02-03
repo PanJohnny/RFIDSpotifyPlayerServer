@@ -1,0 +1,118 @@
+---
+import SpotifyWebApi from "spotify-web-api-node";
+import Write from "./Write.astro";
+
+interface Props {
+    spotifyApi: SpotifyWebApi;
+}
+
+const { spotifyApi } = Astro.props as Props;
+
+let uri: string;
+let context: SpotifyApi.ContextObject;
+await spotifyApi.getMyCurrentPlayingTrack().then(
+    (data) => {
+        if (data.statusCode != 200) return;
+
+        uri = data.body.item.uri;
+        context = data.body.context;
+    },
+    (err) => {}
+);
+let track: SpotifyApi.SingleTrackResponse;
+let img: SpotifyApi.ImageObject;
+let playbum: boolean;
+if (uri) {
+    await spotifyApi.getTrack(uri.split(":")[2]).then(
+        (data) => {
+            track = data.body;
+        },
+        (err) => {
+            console.log(err);
+        }
+    );
+
+    if (track)
+        img = track.album.images[2];
+
+    if (context)
+        playbum = context.type == "playlist" || context.type == "album";
+}
+---
+
+{
+    track ? (
+        <div class="container">
+            <h2>Právě hraje</h2>
+            <div class="playing">
+                <img width={img.width} height={img.height} src={img.url} />
+                <div>
+                    <h3>{track.name}</h3>
+                    <div>
+                        {track.artists.map((artist) => (
+                            <span class="artist">{artist.name}</span>
+                        ))}
+                    </div>
+                    <div>
+                        {playbum ? "Zdroj skladby: " : ""}
+                        {playbum ? (
+                            <a href={context.external_urls.spotify}>
+                                {" "}
+                                {context.type}{" "}
+                            </a>
+                        ) : (
+                            ""
+                        )}
+                    </div>
+                </div>
+            </div>
+            <Write
+                spotifyApi={spotifyApi}
+                contextMode={false}
+                name={track.name}
+                uri={uri}
+            />
+
+            {playbum ? (
+                <Write
+                    spotifyApi={spotifyApi}
+                    contextMode={true}
+                    name={context.type}
+                    uri={context.uri}
+                />
+            ) : (
+                ""
+            )}
+        </div>
+    ) : (
+        <code>Nepodařilo se načíst informace o aktuální skladbě</code>
+    )
+}
+
+<style>
+    .artist:not(:last-child)::after {
+        content: ", ";
+    }
+
+    img {
+        border-radius: 2px;
+        display: block;
+    }
+
+    .playing {
+        display: flex;
+        flex-direction: row;
+    }
+
+    h3 {
+        margin: 0px;
+    }
+
+    .playing > div {
+        margin-left: 2em;
+    }
+
+    .container {
+        margin-bottom: 1em;
+    }
+</style>

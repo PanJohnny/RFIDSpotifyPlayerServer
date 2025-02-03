@@ -1,0 +1,22 @@
+---
+import SpotifyWebApi from "spotify-web-api-node";
+
+interface Props {
+    spotifyApi: SpotifyWebApi;
+    contextMode: boolean;
+    name: string;
+    uri: string;
+}
+
+const { spotifyApi, contextMode, name, uri} = Astro.props as Props;
+---
+
+<div>
+    <button type="submit" onclick={"window.open('/write?uri=" + uri + "')"}>Napsat <b>{name}</b> na kartu</button>
+</div>
+
+<style>
+    button {
+        margin-top: 5px;
+    }
+</style>
