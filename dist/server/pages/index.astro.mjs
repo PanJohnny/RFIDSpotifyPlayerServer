@@ -1,8 +1,8 @@
-import { e as createComponent, f as createAstro, r as renderTemplate, m as maybeRenderHead, h as addAttribute, i as renderComponent, k as renderScript } from '../chunks/astro/server_Cq9lstI0.mjs';
+import { e as createComponent, f as createAstro, r as renderTemplate, m as maybeRenderHead, h as addAttribute, i as renderComponent, k as renderScript } from '../chunks/astro/server_Liq2RC3f.mjs';
 import 'kleur/colors';
 import 'clsx';
 /* empty css                                 */
-import { $ as $$Layout } from '../chunks/Layout_5JtHhAno.mjs';
+import { $ as $$Layout } from '../chunks/Layout_C-TdfSRF.mjs';
 import { s as spotifyApi } from '../chunks/util_CzcWxNgf.mjs';
 import { jsxs, jsx } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
