@@ -1,26 +1,32 @@
-import sqlite3 from "sqlite3";
+import Database from "better-sqlite3";
 import { spotifyApi } from "../../../../util";
 
-const db = new sqlite3.Database("cards.db");
+// Initialize the database
+const db = new Database("cards.db");
 
-// Helper function to run SQL queries
-function queryDB(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function (err) {
-            if (err) reject(err);
-            else resolve(this);
-        });
-    });
-}
+// Ensure the table exists
+db.exec(`
+    CREATE TABLE IF NOT EXISTS cards (
+        id TEXT PRIMARY KEY,
+        uri TEXT,
+        active INTEGER,  -- BOOLEAN is not supported in SQLite
+        action TEXT
+    )
+`);
 
 // Helper function to get a card by ID
 function getCardById(id) {
-    return new Promise((resolve, reject) => {
-        db.get("SELECT * FROM cards WHERE id = ?", [id], (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
+    return db.prepare("SELECT * FROM cards WHERE id = ?").get(id);
+}
+
+// Helper function to insert a new card
+function insertCard(id) {
+    db.prepare("INSERT INTO cards (id, uri, active, action) VALUES (?, ?, ?, ?)").run(id, "", 1, "");
+}
+
+// Helper function to update a card's active state
+function activateCard(id) {
+    db.prepare("UPDATE cards SET active = 1 WHERE id = ?").run(id);
 }
 
 export async function POST({ request }) {
@@ -30,15 +36,15 @@ export async function POST({ request }) {
             return new Response(JSON.stringify({ error: "Missing required parameter: id" }), { status: 400 });
         }
 
-        let card = await getCardById(id);
+        let card = getCardById(id);
 
         if (!card) {
             // If card doesn't exist, create it with active = 1 and empty fields
-            await queryDB("INSERT INTO cards (id, uri, active, action) VALUES (?, ?, ?, ?)", [id, "", 1, ""]);
+            insertCard(id);
             return new Response(JSON.stringify({ message: "Card created and activated", id }), { status: 201 });
         } else {
             // Update card to be active
-            await queryDB("UPDATE cards SET active = 1 WHERE id = ?", [id]);
+            activateCard(id);
 
             if (card.action) {
                 // Execute action if defined

@@ -1,26 +1,24 @@
-import sqlite3 from "sqlite3";
+import Database from "better-sqlite3";
 
-const db = new sqlite3.Database("cards.db");
+// Initialize the database
+const db = new Database("cards.db");
 
 // Ensure the table exists
-db.run(`
+db.exec(`
     CREATE TABLE IF NOT EXISTS cards (
-    id TEXT PRIMARY KEY,
-    uri TEXT,
-    active INTEGER,  -- BOOLEAN is not supported in SQLite
-    action TEXT
+        id TEXT PRIMARY KEY,
+        uri TEXT,
+        active INTEGER,  -- BOOLEAN is not supported in SQLite
+        action TEXT
     )
 `);
 
 // Queries the DB for the active cards and sets them to inactive.
-export async function GET() {
-    return new Promise((resolve) => {
-        db.all("UPDATE cards SET active = 0 WHERE active = 1", (err, rows) => {
-            if (err) {
-                resolve(new Response(JSON.stringify({ error: err.message }), { status: 500 }));
-            } else {
-                resolve(new Response(JSON.stringify({ success:true, message: "Session started" }), { status: 200 }));
-            }
-        });
-    });
+export function GET() {
+    try {
+        db.prepare("UPDATE cards SET active = 0 WHERE active = 1").run();
+        return new Response(JSON.stringify({ success: true, message: "Session started" }), { status: 200 });
+    } catch (error) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
 }
