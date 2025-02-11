@@ -1,3 +1,3 @@
 #!/bin/bash
 mkdir -p logs
-node dist/server/entry.mjs > logs/server.log 2>&1 &
+sudo /home/pi/node/bin/node /home/pi/spotify/server/dist/server/entry.mjs > logs/server.log 2>&1 &

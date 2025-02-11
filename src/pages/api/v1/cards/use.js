@@ -1,32 +1,35 @@
-import Database from "better-sqlite3";
+import bestSqlite from "best-sqlite3";
 import { spotifyApi } from "../../../../util";
 
 // Initialize the database
-const db = new Database("cards.db");
+const db = await bestSqlite.connect("cards.db");
 
 // Ensure the table exists
-db.exec(`
+db.run(`
     CREATE TABLE IF NOT EXISTS cards (
-        id TEXT PRIMARY KEY,
-        uri TEXT,
-        active INTEGER,  -- BOOLEAN is not supported in SQLite
-        action TEXT
+                                         id TEXT PRIMARY KEY,
+                                         uri TEXT,
+                                         active INTEGER,  -- BOOLEAN is not supported in SQLite
+                                         action TEXT
     )
 `);
 
 // Helper function to get a card by ID
 function getCardById(id) {
-    return db.prepare("SELECT * FROM cards WHERE id = ?").get(id);
+    return db.run("SELECT * FROM cards WHERE id = $id", { id })[0] || null;
 }
 
 // Helper function to insert a new card
 function insertCard(id) {
-    db.prepare("INSERT INTO cards (id, uri, active, action) VALUES (?, ?, ?, ?)").run(id, "", 1, "");
+    db.run(
+        "INSERT INTO cards (id, uri, active, action) VALUES ($id, '', 1, '')",
+        { id }
+    );
 }
 
 // Helper function to update a card's active state
 function activateCard(id) {
-    db.prepare("UPDATE cards SET active = 1 WHERE id = ?").run(id);
+    db.run("UPDATE cards SET active = 1 WHERE id = $id", { id });
 }
 
 export async function POST({ request }) {
@@ -50,7 +53,7 @@ export async function POST({ request }) {
                 // Execute action if defined
                 switch (card.action) {
                     case "play":
-                        if (card.uri) await spotifyApi.play({ uris: [card.uri] });
+                        if (card.uri) await spotifyApi.play({context_uri: card.uri});
                         break;
                     case "queue":
                         if (card.uri) await spotifyApi.addToQueue(card.uri);
