@@ -1,6 +1,7 @@
 #!/bin/bash
 # Switch to the correct node version
-echo "Please use Node 22 - it is the latest supported version on raspi 0"
+echo "Please use Node 20.3.0 - it is the latest supported version on raspi 0"
+node --version
 
 # Set env variables to build for the right environment
 export npm_config_arch=armv6l
